@@ -1,481 +1,225 @@
-/*
- * Copyright 2018 Blockchain Innovation Foundation <https://blockchain-innovation.org>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// Apply the java-library plugin to add support for Java Library
-//apply plugin: "idea"
-import org.asciidoctor.gradle.AsciidoctorTask
-
-buildscript {
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'io.github.robwin:jgitflow-gradle-plugin:0.6.0'
-    }
-}
-
-
-
 plugins {
-    id 'org.asciidoctor.convert' version '1.5.6' apply false
-    id 'org.springframework.boot' version '2.2.5.RELEASE' apply false
-    id "com.athaydes.osgi-run" version "1.6.0" apply false
-    id "org.dm.bundle" version "0.8.4" apply false
-    id 'nu.studer.credentials' version '1.0.7'
-    id "biz.aQute.bnd.builder" version "5.0.0" apply false
-
+    id 'java'
+    id "org.openapi.generator" version "4.2.3"
+    id 'maven'
+    id 'maven-publish'
 }
-apply plugin: 'io.github.robwin.jgitflow'
+
+group 'org.factomprotocol.identity'
+version '0.3.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
 
 ext {
-    libVersions = [
-            eddsa : "0.3.0",
-            gson  : "2.8.5",
-            slf4j : "1.7.25",
-            jee   : [
-                    cdiApi : "2.0.SP1",
-                    jsonb  : "1.0.0-RC2",
-                    jsonApi: "1.1.2"
-            ],
-            spring: [
-                    boot: "2.2.5.RELEASE"
-            ]
-    ]
-    testVersions = [
-            junit4: "4.12",
-            jee   : [
-                    yasson   : "1.0.1",
-                    javaxJson: "1.1.2"
-            ]
-    ]
+    v = [
+            releaseNotes: "Initial release",
+            groupId: "org.factomprotocol.identity",
+            artifactBaseModels: "factom-did-models",
+            artifactBaseClient: "factom-did-client",
+            artifactBaseServer: "factom-did-server",
+            artifactModelsDescription: "Factom DID models",
+            artifactClientDescription: "Factom DID client",
+            artifactServerDescription: "Factom DID server",
+            artifactUrl: "https://github.com/Sphereon-Opensource/factom-identity-schema/",
+            version: "0.3.0-SNAPSHOT",
+            apiPackage: "org.factomprotocol.identity.did.api",
+            invokerPackage: "org.factomprotocol.identity.did.invoker",
+            modelPackage: "org.factomprotocol.identity.did.model",
+            gitUserId: "bi-foundation",
+            gitRepoId: "factom-did-models",
+            developerEmail: "dev@sphereon.com",
+            developerName: "Sphereon BV",
+            developerOrganization: "Sphereon BV",
+            developerOrganizationUrl: "https://sphereon.com",
+            licenseName: "Apache2",
+            scmConnection: "https://github.com/Sphereon-Opensource/factom-identity-schema.git",
+            scmDeveloperConnection: "https://github.com/Sphereon-Opensource/factom-identity-schema.git",
+            scmUrl: "https://github.com/Sphereon-Opensource/factom-identity-schema/"
 
-    exportedProjects = [
-            ":factom-client-api",
-            ":factom-client-impl",
-            ":factom-client-offline-signing",
-            ":service-providers:logger-slf4j",
-            ":service-providers:json-converter-gson",
-            ":service-providers:json-converter-jee",
-            ":frameworks:jee-support",
-            ":frameworks:spring-boot-support"
     ]
-
-    // the password needs to be specified via command line
-    repoUser = project.hasProperty('repoUser') ? project.getProperty('repoUser') : credentials.nexusUser
-    repoPass = project.hasProperty('repoPass') ? project.getProperty('repoPass') : credentials.nexusPassword
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
 
 
-allprojects {
-    apply plugin: "maven"
-
-
-
-    group = "org.blockchain-innovation.factom.client"
-
-
-    repositories {
-        mavenLocal()
-        jcenter()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-
-    }
-
-}
-
-subprojects {
-//    apply plugin: "checkstyle"
-//    apply plugin: "findbugs"
-//    apply plugin: "pmd"
-    apply plugin: "java"
-    apply plugin: "maven-publish"
-    sourceCompatibility = 8
-
-    buildscript {
-        repositories {
-            jcenter()
-            maven {
-                url "https://plugins.gradle.org/m2/"
-            }
-            mavenLocal()
-        }
-    }
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-//                artifact sourceJar()
-//                artifact javadocJar()
-
-                  pom {
-
-
-                      licenses {
-                          license {
-                              name = 'The Apache License, Version 2.0'
-                              url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                          }
-                      }
-                      developers {
-                          developer {
-                              id = 'BIF'
-                              name = 'Blockchain Innovation Foundation'
-                              email = 'info@blockchain-innovation.org'
-                          }
-                      }
-                      scm {
-                          connection = 'scm:git:https://github.com/bi-foundation/factom-java.git'
-                          developerConnection = 'scm:git:https://github.com/bi-foundation/factom-java.git'
-                          url = 'https://github.com/bi-foundation/factom-java/'
-                      }
-                  }
-            }
-        }
-
-
-        repositories {
-            maven {
-                def releasesRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-releases"
-                def snapshotsRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots"
-                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-                credentials {
-                    username project.repoUser
-                    password project.repoPass
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'Sphereon'
+                        name = 'Sphereon BV'
+                        email = 'dev@sphereon.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/Sphereon-Opensource/factom-identity-schema.git'
+                    developerConnection = 'scm:git:https://github.com/Sphereon-Opensource/factom-identity-schema.git'
+                    url = 'https://github.com/Sphereon-Opensource/factom-identity-schema/'
                 }
             }
-            mavenLocal()
         }
     }
 
-    task sourceJar(type: Jar, dependsOn: classes) {
-        classifier 'sources'
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
-
-    tasks.withType(JavaCompile) {
-        options.encoding = "UTF-8"
-    }
-
-    tasks.withType(Pmd) {
-        pmd.sourceSets = [sourceSets.main]
-        ignoreFailures = false
-        consoleOutput = true
-        ruleSetFiles = files("${project(':').projectDir}/quality/config/ruleset.xml")
-        ruleSets = [
-                "java-basic",
-                "java-braces",
-                "java-clone",
-                "java-finalizers",
-                "java-j2ee",
-                "java-strictexception",
-                "java-strings",
-                "java-sunsecure",
-                "java-typeresolution",
-                "java-unnecessary",
-                "java-unusedcode"
-        ]
-        reports {
-            xml.enabled = true
-            html.enabled = true
-            html.destination file("${project(':').projectDir}/quality/reports/${project.name}-pmd.html")
-        }
-    }
-//    tasks.withType(FindBugs) {
-//        findbugs.sourceSets = [sourceSets.main]
-//        ignoreFailures = false
-//        excludeFilter = file("${project(':').projectDir}/quality/config/findbugs.exclude.xml")
-//        reports {
-//            xml.enabled = false
-//            html.enabled = true
-//            html.destination file("${project(':').projectDir}/quality/reports/${project.name}-findbugs.html")
-//        }
-//    }
-    tasks.withType(Checkstyle) {
-        checkstyle.sourceSets = [sourceSets.main]
-        ignoreFailures = true
-        configFile = file("${project(':').projectDir}/quality/config/checkstyle.xml")
-        reports {
-            xml.enabled false
-            html.enabled true
-            html.destination file("${project(':').projectDir}/quality/reports/${project.name}-checkstyle.html")
-        }
-    }
-    task qualityCheck {
-        // Extreme ugly way to disable pmdTest task, since changing the sourceSets to [sourceSets.main] doesn't seem to work on explicit dependencies
-        dependsOn tasks.withType(Pmd).matching {
-            !it.name.toLowerCase().contains("test")
-        }
-//        dependsOn tasks.withType(FindBugs).matching {
-//            !it.name.toLowerCase().contains("test")
-//        }
-        dependsOn tasks.withType(Checkstyle).matching {
-            !it.name.toLowerCase().contains("test")
-        }
-    }
-}
-
-
-
-
-
-task cleanReports(type: Delete) {
-    doLast {
-        FileTree tree = fileTree(dir: "${project(':').projectDir}/quality/reports");
-        tree.include "*.html"
-        tree.each { File file ->
-            delete(file)
-        }
-        println "clean reports: ${project(':').projectDir}/quality/reports"
-    }
-    // clean.dependsOn cleanReports
-}
-
-project(':factom-client-api') {
-    apply plugin: "java"
-    dependencies {
-        // Provided by JEE Environment
-        compile 'javax.xml.bind:jaxb-api:2.3.1'
-        compileOnly "javax.enterprise:cdi-api:$libVersions.jee.cdiApi"
-    }
-//    publishing {
-//        publications {
-//            mavenJava(MavenPublication) {
-//                from components.java
-//                // more goes in here
-//            }
-//        }
-//    }
-}
-
-
-project(':factom-client-impl') {
-    apply plugin: "java"
-    dependencies {
-        compile project(':factom-client-api')
-
-        // Provided by JEE Environment
-        compileOnly "javax.enterprise:cdi-api:$libVersions.jee.cdiApi"
-    }
-}
-
-project(':factom-client-offline-signing') {
-    apply plugin: "java"
-    dependencies {
-        compile project(':factom-client-impl')
-        compile "net.i2p.crypto:eddsa:$libVersions.eddsa"
-        compileOnly "javax.enterprise:cdi-api:$libVersions.jee.cdiApi"
-    }
-}
-
-project(':service-providers:logger-slf4j') {
-    apply plugin: "java"
-
-    dependencies {
-        compile project(':factom-client-api')
-        compile "org.slf4j:slf4j-api:$libVersions.slf4j"
-    }
-}
-
-project(':service-providers:json-converter-gson') {
-    apply plugin: "java"
-
-    dependencies {
-        compile project(':factom-client-api')
-        compile "com.google.code.gson:gson:$libVersions.gson"
-        compileOnly "javax.enterprise:cdi-api:$libVersions.jee.cdiApi"
-        testCompile "junit:junit:$testVersions.junit4"
-        testCompile project(':factom-client-impl')
-    }
-}
-
-project(':service-providers:json-converter-jee') {
-    apply plugin: "java"
-
-    dependencies {
-        compile project(':factom-client-api')
-        // Provided by JEE env
-        compileOnly "javax.json:javax.json-api:$libVersions.jee.jsonApi"
-        compileOnly "javax.json.bind:javax.json.bind-api:$libVersions.jee.jsonb"
-        compileOnly "javax.enterprise:cdi-api:$libVersions.jee.cdiApi"
-        // Use reference implementations for tests
-        testCompile "org.glassfish:javax.json:$testVersions.jee.javaxJson"
-        testCompile "org.eclipse:yasson:$testVersions.jee.yasson"
-        testCompile "junit:junit:$testVersions.junit4"
-        testCompile project(':factom-client-impl')
-    }
-}
-
-project(':frameworks:jee-support') {
-    apply plugin: "java"
-
-    dependencies {
-        compile project(':factom-client-impl')
-        compile project(':service-providers:json-converter-jee')
-        // Provided by JEE Env (full spec, since we use more than CDI alone)
-        compileOnly "javax:javaee-api:7.0"
-
-        testCompile project(':service-providers:logger-slf4j')
-        testCompile "org.jboss.arquillian.container:arquillian-glassfish-embedded-3.1:1.0.2"
-        testCompile "org.glassfish.main.extras:glassfish-embedded-all:5.0"
-        testCompile "org.jboss.arquillian.junit:arquillian-junit-container:1.4.0.Final"
-        testCompile "org.glassfish:javax.json:$testVersions.jee.javaxJson"
-        testCompile "org.eclipse:yasson:$testVersions.jee.yasson"
-        testCompile "junit:junit:$testVersions.junit4"
-    }
-}
-
-project(':frameworks:spring-boot-support') {
 
     repositories {
-        jcenter()
-    }
-    apply plugin: "java"
-//    apply plugin: "org.springframework.boot"
-    apply plugin: "io.spring.dependency-management"
-
-    dependencies {
-        compile project(':factom-client-impl')
-        // Explicit dep on CDI, since it might not be on classpath of spring boot application
-        compile "javax.enterprise:cdi-api:$libVersions.jee.cdiApi"
-        compileOnly "org.springframework.boot:spring-boot-starter:$libVersions.spring.boot"
-        testCompile project(":service-providers:logger-slf4j")
-        testCompile project(":service-providers:json-converter-gson")
-        testCompile "com.google.code.gson:gson:$libVersions.gson"
-        testCompile "junit:junit:$testVersions.junit4"
-
-        testCompile "org.springframework.boot:spring-boot-starter:$libVersions.spring.boot"
-        testCompile "org.springframework.boot:spring-boot-starter-test:$libVersions.spring.boot"
-
-    }
-
-}
-
-
-project(':frameworks:osgi') {
-
-    apply plugin: "java"
-    apply plugin: "com.athaydes.osgi-run"
-//    apply plugin: "org.dm.bundle"
-
-    runOsgi {
-        bundles += project
-    }
-
-    repositories {
-        jcenter()
-    }
-
-
-    dependencies {
-        compile project(':factom-client-api')
-        compile project(':factom-client-impl')
-        compile project(':service-providers:json-converter-gson')
-        compile project(':service-providers:json-converter-jee')
-        compile project(':service-providers:logger-slf4j')
+        maven {
+            def releasesRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-releases"
+            def snapshotsRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username project.repoUser
+                password project.repoPass
+            }
+        }
+        mavenLocal()
     }
 }
 
-//project(':factom-did-entry-client') {
-//    apply plugin: "java"
-////    apply plugin: 'org.openapi.generator'
-//
-//    dependencies {
-//        compile project(':factom-client-api')
-//
-//    }
-//}
-
-
-project(':factom-client-tests') {
-    apply plugin: "java"
-    dependencies {
-        testCompile project(':service-providers:logger-slf4j')
-        testCompile project(':factom-client-impl')
-        testCompile project(':factom-client-offline-signing')
-//        testCompile project(':service-providers:json-converter-gson')
-        testCompile project(':service-providers:json-converter-jee')
-        testCompile "org.mock-server:mockserver-netty:5.4.1"
-        testCompile "org.mock-server:mockserver-client-java:5.4.1"
-        testCompile "org.glassfish:javax.json:$testVersions.jee.javaxJson"
-        testCompile "org.eclipse:yasson:$testVersions.jee.yasson"
-        testCompile "junit:junit:$testVersions.junit4"
-
-
+repositories {
+maven {
+        def releasesRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-releases"
+        def snapshotsRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots"
+        url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        credentials {
+            username project.repoUser
+            password project.repoPass
+        }
     }
+    mavenLocal()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task codegen(dependsOn: ['buildJavaModelsGson', 'buildJavaClientOkHttp', 'buildJavaSpringServer'])
+
+task buildJavaModelsGson(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask){
+    generatorName = "java"
+    groupId = "$v.groupId".toString()
+    id = "${v.artifactBaseModels}-java-gson".toString()
+    version = "$v.version".toString()
+    releaseNote = "$v.releaseNotes".toString()
+    inputSpec = "$projectDir/src/main/resources/openapi.yaml".toString()
+    outputDir = "$buildDir/$v.artifactBaseModels/java-gson".toString()
+    apiPackage = "$v.apiPackage".toString()
+    invokerPackage = "$v.invokerPackage".toString()
+    modelPackage = "$v.modelPackage".toString()
+    gitUserId = "$v.gitUserId".toString()
+    gitRepoId = "$v.gitRepoId".toString()
+    generateApiTests = false
+    generateModelTests = false
+    apiFilesConstrainedTo = []
+    configOptions = [
+            artifactId: "${v.artifactBaseModels}-java-gson".toString(),
+            artifactDescription:  "$v.artifactModelsDescription".toString(),
+            artifactUrl:  "$v.artifactUrl".toString(),
+            scmConnection: "$v.scmConnection".toString(),
+            scmDeveloperConnection: "$v.scmDeveloperConnection".toString(),
+            scmUrl: "$v.scmUrl".toString(),
+            booleanGetterPrefix: "is",
+            developerEmail: "$v.developerEmail".toString(),
+            developerName: "$v.developerName".toString(),
+            developerOrganization: "$v.developerOrganization".toString(),
+            developerOrganizationUrl: "$v.developerOrganizationUrl".toString(),
+            licenseName: "$v.licenseName".toString(),
+            dateLibrary: "java8"
+    ]
+    systemProperties = [
+            models: "",
+            supportingFiles: ".gitignore,build.gradle,gradle.properties,gradlew,gradlew.bat,README.md,settings.gradle,pom.xml,JSON.java,Authentication.java,ApiKeyAuth.java,OAuth.java,Pair.java,RetryingOAuth.java",
+            apis: "false"
+    ]
+}
+
+task buildJavaClientOkHttp(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask){
+    generatorName = "java"
+    groupId = "$v.groupId".toString()
+    id = "${v.artifactBaseClient}-java-okhttp".toString()
+    version = "$v.version".toString()
+    releaseNote = "$v.releaseNotes".toString()
+    inputSpec = "$projectDir/src/main/resources/openapi.yaml".toString()
+    outputDir = "$buildDir/$v.artifactBaseClient/java-okhttp".toString()
+    apiPackage = "$v.apiPackage".toString()
+    invokerPackage = "$v.invokerPackage".toString()
+    modelPackage = "$v.modelPackage".toString()
+    gitUserId = "$v.gitUserId".toString()
+    gitRepoId = "$v.gitRepoId".toString()
+    generateApiTests = true
+    generateModelTests = true
+    configOptions = [
+            artifactId: "${v.artifactBaseClient}-java-okhttp".toString(),
+            artifactDescription:  "$v.artifactClientDescription".toString(),
+            artifactUrl:  "$v.artifactUrl".toString(),
+            scmConnection: "$v.scmConnection".toString(),
+            scmDeveloperConnection: "$v.scmDeveloperConnection".toString(),
+            scmUrl: "$v.scmUrl".toString(),
+            booleanGetterPrefix: "is",
+            developerEmail: "$v.developerEmail".toString(),
+            developerName: "$v.developerName".toString(),
+            developerOrganization: "$v.developerOrganization".toString(),
+            developerOrganizationUrl: "$v.developerOrganizationUrl".toString(),
+            licenseName: "$v.licenseName".toString(),
+            dateLibrary: "java8"
+    ]
+    systemProperties = [
+            apis: "",
+            models: "",
+            supportingFiles: ""
+    ]
 }
 
 
-project(':docs') {
+task buildJavaSpringServer(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask){
+    generatorName = "spring"
+    groupId = "$v.groupId".toString()
+    id = "${v.artifactBaseServer}-java-spring-api".toString()
+    version = "$v.version".toString()
+    releaseNote = "$v.releaseNotes".toString()
+    inputSpec = "$projectDir/src/main/resources/openapi.yaml".toString()
+    outputDir = "$buildDir/$v.artifactBaseServer/java-spring-api".toString()
+    apiPackage = "$v.apiPackage".toString()
+    invokerPackage = "$v.invokerPackage".toString()
+    modelPackage = "$v.modelPackage".toString()
+    gitUserId = "$v.gitUserId".toString()
+    gitRepoId = "$v.gitRepoId".toString()
+    generateApiTests = true
+    generateModelTests = true
+    configOptions = [
+            artifactId: "${v.artifactBaseServer}-java-spring-api".toString(),
+            artifactDescription:  "$v.artifactServerDescription".toString(),
+            artifactUrl:  "$v.artifactUrl".toString(),
+            scmConnection: "$v.scmConnection".toString(),
+            scmDeveloperConnection: "$v.scmDeveloperConnection".toString(),
+            scmUrl: "$v.scmUrl".toString(),
+            developerEmail: "$v.developerEmail".toString(),
+            developerName: "$v.developerName".toString(),
+            developerOrganization: "$v.developerOrganization".toString(),
+            developerOrganizationUrl: "$v.developerOrganizationUrl".toString(),
+            licenseName: "$v.licenseName".toString(),
+            java8: "true",
+            dateLibrary: "java8",
+            interfaceOnly: "true",
+            delegatePattern: "true",
+            useTags: "true",
+            useOptional: "true",
+            useBeanValidation: "true",
+            skipDefaultInterface: "true",
+            openapiDocketConfig: "true"
 
-    buildscript {
-        repositories {
-            jcenter()
-        }
-
-        dependencies {
-            classpath "org.asciidoctor:asciidoctor-gradle-plugin:1.5.6"
-            classpath "org.asciidoctor:asciidoctorj-epub3:1.5.0-alpha.6"
-            classpath "org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.15"
-        }
-    }
-    apply plugin: "java"
-    apply plugin: "org.asciidoctor.convert"
-
-
-    tasks.withType(AsciidoctorTask) { task ->
-
-        sources {
-            include "README.adoc"
-        }
-        attributes 'sourcedir': project.sourceSets.main.java.srcDirs[0],
-                'source-highlighter': "coderay",
-                experimental: true,
-                toc: "right",
-                idprefix: "",
-                idseparator: "-"
-    }
-
-    task html5(type: AsciidoctorTask, description: "Generates single page HTML") {
-        backends "html5"
-    }
-
-    task pdf(type: AsciidoctorTask, description: "Generates PDF") {
-        backends "pdf"
-    }
-
-    task epub3(type: AsciidoctorTask, description: "Generates EPUB3") {
-        backends "epub3"
-    }
-    task javadocs(type: Javadoc) {
-        source exportedProjects.collect { project(it).sourceSets.main.allJava }
-        classpath = files(exportedProjects.collect { project(it).sourceSets.main.compileClasspath })
-        destinationDir = file("javadoc")
-        options.encoding = "UTF-8"
-        title = "Factom Java Client v" + project.version
-
-    }
-
-    defaultTasks "html5", "javadocs"
+    ]
+    systemProperties = [
+            apis: "",
+            models: "false",
+            supportingFiles: ""
+    ]
 }
