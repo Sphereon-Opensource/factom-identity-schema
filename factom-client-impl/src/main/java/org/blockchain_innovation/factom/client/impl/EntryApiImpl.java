@@ -2,6 +2,7 @@ package org.blockchain_innovation.factom.client.impl;
 
 import org.blockchain_innovation.factom.client.api.*;
 import org.blockchain_innovation.factom.client.api.errors.FactomException;
+import org.blockchain_innovation.factom.client.api.errors.FactomRuntimeException;
 import org.blockchain_innovation.factom.client.api.listeners.CommitAndRevealListener;
 import org.blockchain_innovation.factom.client.api.log.LogFactory;
 import org.blockchain_innovation.factom.client.api.log.Logger;
@@ -20,8 +21,12 @@ import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Named
 @SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
@@ -56,25 +61,29 @@ public class EntryApiImpl extends AbstractClient implements EntryApi {
         return this;
     }
 
-    private FactomdClient getFactomdClient() throws FactomException.ClientException {
+    @Override
+    public FactomdClient getFactomdClient() throws FactomException.ClientException {
         if (factomdClient == null) {
             throw new FactomException.ClientException("factomd client not provided");
         }
         return factomdClient;
     }
 
+    @Override
     public EntryApiImpl setFactomdClient(FactomdClient factomdClient) {
         this.factomdClient = factomdClient;
         return this;
     }
 
-    private WalletdClient getWalletdClient() throws FactomException.ClientException {
+    @Override
+    public WalletdClient getWalletdClient() throws FactomException.ClientException {
         if (walletdClient == null) {
             throw new FactomException.ClientException("walletd client not provided");
         }
         return walletdClient;
     }
 
+    @Override
     public EntryApiImpl setWalletdClient(WalletdClient walletdClient) {
         this.walletdClient = walletdClient;
         return this;
@@ -113,17 +122,59 @@ public class EntryApiImpl extends AbstractClient implements EntryApi {
         String chainId = Encoding.HEX.encode(entryOperations.calculateChainId(chain.getFirstEntry().getExternalIds()));
         return factomdClient.chainHead(chainId)
                 .thenApplyAsync(response -> response.getResult() != null &&
-                        StringUtils.isNotEmpty(response.getResult().getChainHead()));
+                        StringUtils.isNotEmpty(response.getResult().getChainHead()))
+                .exceptionally(throwable -> false);
+
     }
 
     /**
      * @param chainId
      * @return list of all EntryBlocks within a certain chain up till genesis block
      */
+    @Override
     public CompletableFuture<List<EntryBlockResponse>> allEntryBlocks(String chainId) {
         return entryBlocksUpTilKeyMR(factomdClient.chainHead(chainId).join().getResult().getChainHead());
     }
 
+    /**
+     * All entry blocks of a chain
+     *
+     * @param chainId
+     * @return
+     */
+    @Override
+    public CompletableFuture<List<EntryBlockResponse.Entry>> allEntryBlocksEntries(String chainId) {
+        return entryBlocksEntriesUpTilKeyMR(factomdClient.chainHead(chainId).join().getResult().getChainHead());
+    }
+
+
+    @Override
+    public CompletableFuture<List<EntryResponse>> allEntries(String chainId) {
+        return allEntries(chainId, Encoding.HEX);
+    }
+
+    @Override
+    public CompletableFuture<List<EntryResponse>> allEntries(String chainId, Encoding encoding) {
+        if (encoding != Encoding.HEX && encoding != Encoding.UTF_8) {
+            throw new FactomRuntimeException("Encoding needs to be UTF-8 or HEX. Value: " + encoding.name());
+        }
+        return entriesUpTilKeyMR(factomdClient.chainHead(chainId).join().getResult().getChainHead()).
+                thenApplyAsync(entryResponses -> entryResponses.stream().map(entryResponse ->
+                        encoding == Encoding.UTF_8 ? encodeOperations.decodeHex(entryResponse) : entryResponse).collect(Collectors.toList())
+                );
+    }
+
+    @Override
+    public CompletableFuture<List<EntryResponse>> entriesUpTilKeyMR(String keyMR) {
+        List<EntryBlockResponse.Entry> entriesUpTilKeyMR = entryBlocksEntriesUpTilKeyMR(keyMR).join();
+        List<EntryResponse> entries = entriesUpTilKeyMR.stream().map(entryInfo -> factomdClient.entry(entryInfo.getEntryHash()).join().getResult()).collect(Collectors.toList());
+        CompletableFuture<List<EntryResponse>> completableFuture = new CompletableFuture<>();
+        completableFuture.complete(entries);
+        return completableFuture;
+    }
+
+
+    @Override
     public CompletableFuture<List<EntryBlockResponse>> entryBlocksUpTilKeyMR(String keyMR) {
         List<EntryBlockResponse> entryBlockResponseList = new ArrayList<>();
 
@@ -136,6 +187,23 @@ public class EntryApiImpl extends AbstractClient implements EntryApi {
         }
         CompletableFuture<List<EntryBlockResponse>> completableFuture = new CompletableFuture<>();
         completableFuture.complete(entryBlockResponseList);
+        return completableFuture;
+    }
+
+
+    /**
+     * List of all entry hashes and timestamps uptil a certain key merkle root.
+     *
+     * @param keyMR
+     * @return
+     */
+    @Override
+    public CompletableFuture<List<EntryBlockResponse.Entry>> entryBlocksEntriesUpTilKeyMR(String keyMR) {
+        List<EntryBlockResponse> entryBlocksUpTilKeyMR = entryBlocksUpTilKeyMR(keyMR).join();
+        List<EntryBlockResponse.Entry> entries = new ArrayList<>();
+        entryBlocksUpTilKeyMR.stream().map(EntryBlockResponse::getEntryList).forEach(entries::addAll);
+        CompletableFuture<List<EntryBlockResponse.Entry>> completableFuture = new CompletableFuture<>();
+        completableFuture.complete(entries);
         return completableFuture;
     }
 
@@ -229,12 +297,19 @@ public class EntryApiImpl extends AbstractClient implements EntryApi {
     }
 
     private <T> FactomResponse<T> handleResponse(CommitAndRevealListener listener, Consumer<T> listenerCall, FactomResponse<T> response) {
+        assertResponse(response);
         if (response.hasErrors()) {
             listener.onError(response.getRpcErrorResponse());
         } else {
             listenerCall.accept(response.getResult());
         }
         return response;
+    }
+
+    private void assertResponse(FactomResponse<?> response) {
+        if (response == null) {
+            throw new FactomRuntimeException.AssertionException("Response was null, which was not expected");
+        }
     }
 
     private FactomResponse<ComposeResponse> notifyCompose(FactomResponse<ComposeResponse> response) {
@@ -248,21 +323,25 @@ public class EntryApiImpl extends AbstractClient implements EntryApi {
     }
 
     private FactomResponse<CommitChainResponse> notifyChainCommit(FactomResponse<CommitChainResponse> response) {
+        assertResponse(response);
         listeners.forEach(listener -> handleResponse(listener, listener::onCommit, response));
         return response;
     }
 
     private FactomResponse<RevealResponse> notifyReveal(FactomResponse<RevealResponse> response) {
+        assertResponse(response);
         listeners.forEach(listener -> handleResponse(listener, listener::onReveal, response));
         return response;
     }
 
     private FactomResponse<EntryTransactionResponse> notifyEntryTransaction(FactomResponse<EntryTransactionResponse> response) {
+        assertResponse(response);
         listeners.forEach(listener -> handleResponse(listener, listener::onTransactionAcknowledged, response));
         return response;
     }
 
     private FactomResponse<EntryTransactionResponse> notifyCommitConfirmed(FactomResponse<EntryTransactionResponse> response) {
+        assertResponse(response);
         listeners.forEach(listener -> handleResponse(listener, listener::onCommitConfirmed, response));
         return response;
     }
@@ -287,6 +366,9 @@ public class EntryApiImpl extends AbstractClient implements EntryApi {
     }
 
     private CompletionStage<FactomResponse<EntryTransactionResponse>> transactionAcknowledgeConfirmation(FactomResponse<RevealResponse> revealChainResponse) {
+        if (revealChainResponse == null || revealChainResponse.getResult() == null) {
+            throw new FactomRuntimeException.AssertionException("Reveal chain response was null in transaction acknowledge confirmation. " + (revealChainResponse == null ? "<no RPC response>" : revealChainResponse.getHTTPResponseMessage()));
+        }
         String entryHash = revealChainResponse.getResult().getEntryHash();
         String chainId = revealChainResponse.getResult().getChainId();
         List<EntryTransactionResponse.Status> desiredStatus = Arrays.asList(EntryTransactionResponse.Status.TransactionACK, EntryTransactionResponse.Status.DBlockConfirmed);
