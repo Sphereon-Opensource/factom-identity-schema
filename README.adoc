@@ -64,6 +64,17 @@ You need at least the following dependencies in your application
 
 ....
 
+== Maven generation and deployment
+
+```
+gradle codegen
+
+mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-client/java-okhttp/pom.xml deploy
+mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-models/java-gson/pom.xml deploy
+mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-server/java-spring-api/pom.xml deploy
+
+```
+
 == Active Development
 IMPORTANT: This software still is in early development stage. As such you should expect breaking changes in APIs, we expect
 to keep that to a minimum though.
