@@ -1,12 +1,12 @@
 plugins {
     id 'java'
-    id "org.openapi.generator" version "4.2.3"
+    id "org.openapi.generator" version "5.2.0"
     id 'maven'
     id 'maven-publish'
 }
 
 group 'org.factomprotocol.identity'
-version '0.3.0-SNAPSHOT'
+version '0.3.1-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
@@ -21,7 +21,7 @@ ext {
             artifactClientDescription: "Factom DID client",
             artifactServerDescription: "Factom DID server",
             artifactUrl: "https://github.com/Sphereon-Opensource/factom-identity-schema/",
-            version: "0.3.0-SNAPSHOT",
+            version: "0.3.1-SNAPSHOT",
             apiPackage: "org.factomprotocol.identity.did.api",
             invokerPackage: "org.factomprotocol.identity.did.invoker",
             modelPackage: "org.factomprotocol.identity.did.model",
@@ -72,8 +72,8 @@ publishing {
 
     repositories {
         maven {
-            def releasesRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-releases"
-            def snapshotsRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots"
+            def releasesRepoUrl = "https://nexus.qa.sphereon.com/repository/sphereon-opensource-releases"
+            def snapshotsRepoUrl = "https://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots"
             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             credentials {
                 username project.repoUser
@@ -86,8 +86,8 @@ publishing {
 
 repositories {
 maven {
-        def releasesRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-releases"
-        def snapshotsRepoUrl = "http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots"
+        def releasesRepoUrl = "https://nexus.qa.sphereon.com/repository/sphereon-opensource-releases"
+        def snapshotsRepoUrl = "https://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots"
         url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
         credentials {
             username project.repoUser
@@ -119,6 +119,11 @@ task buildJavaModelsGson(type: org.openapitools.generator.gradle.plugin.tasks.Ge
     generateApiTests = false
     generateModelTests = false
     apiFilesConstrainedTo = []
+    globalProperties = [
+            models: "",
+            supportingFiles: ".gitignore,build.gradle,gradle.properties,gradlew,gradlew.bat,README.md,settings.gradle,pom.xml,JSON.java,Authentication.java,ApiKeyAuth.java,OAuth.java,Pair.java,RetryingOAuth.java,OAuthFlow.java,OAuthOkHttpClient.java",
+            apis: "false"
+    ]
     configOptions = [
             artifactId: "${v.artifactBaseModels}-java-gson".toString(),
             artifactDescription:  "$v.artifactModelsDescription".toString(),
@@ -133,11 +138,6 @@ task buildJavaModelsGson(type: org.openapitools.generator.gradle.plugin.tasks.Ge
             developerOrganizationUrl: "$v.developerOrganizationUrl".toString(),
             licenseName: "$v.licenseName".toString(),
             dateLibrary: "java8"
-    ]
-    systemProperties = [
-            models: "",
-            supportingFiles: ".gitignore,build.gradle,gradle.properties,gradlew,gradlew.bat,README.md,settings.gradle,pom.xml,JSON.java,Authentication.java,ApiKeyAuth.java,OAuth.java,Pair.java,RetryingOAuth.java",
-            apis: "false"
     ]
 }
 
@@ -171,7 +171,7 @@ task buildJavaClientOkHttp(type: org.openapitools.generator.gradle.plugin.tasks.
             licenseName: "$v.licenseName".toString(),
             dateLibrary: "java8"
     ]
-    systemProperties = [
+    globalProperties = [
             apis: "",
             models: "",
             supportingFiles: ""
@@ -217,7 +217,7 @@ task buildJavaSpringServer(type: org.openapitools.generator.gradle.plugin.tasks.
             openapiDocketConfig: "true"
 
     ]
-    systemProperties = [
+    globalProperties = [
             apis: "",
             models: "false",
             supportingFiles: ""

@@ -4,63 +4,12 @@ Factom OpenAPI v3 schemas for identities and DIDs. Includes models as well as en
 
 == Maven installation
 This is a gradle project but maven snapshots and releases are distributed on the Nexus installation of Sphereon at
-http://nexus.qa.sphereon.com/repository/sphereon-opensource-releases/
+https://nexus.qa.sphereon.com/repository/sphereon-opensource-releases/
 
 You need at least the following dependencies in your application
 
 ....
 
-<dependency>
-    groupId>org.blockchain-innovation.factom.client</groupId>
-    <artifactId>factom-client-impl</artifactId>
-    <version>0.3.0</version>
-    <scope>compile</scope>
-</dependency>
-<dependency>
-    groupId>org.blockchain-innovation.factom.client</groupId>
-    <artifactId>logger-slf4j</artifactId>
-    <version>0.3.0</version>
-    <scope>compile</scope>
-</dependency>
-
-<!-- At least one of the following dependencies -->
-<dependency>
-    groupId>org.blockchain-innovation.factom.client</groupId>
-    <artifactId>json-converter-jee</artifactId>
-    <version>0.3.0</version>
-    <scope>compile</scope>
-</dependency>
-<dependency>
-    groupId>org.blockchain-innovation.factom.client</groupId>
-    <artifactId>json-converter-gson</artifactId>
-    <version>0.3.0</version>
-    <scope>compile</scope>
-</dependency>
-
-<!-- Offline signing support -->
-<dependency>
-    groupId>org.blockchain-innovation.factom.client</groupId>
-    <artifactId>factom-client-offline-signing</artifactId>
-    <version>0.3.0</version>
-    <scope>compile</scope>
-</dependency>
-
-
-<!-- Optional JEE support (only in JEE environment) -->
-<dependency>
-    groupId>org.blockchain-innovation.factom.client</groupId>
-    <artifactId>jee-support</artifactId>
-    <version>0.3.0</version>
-    <scope>compile</scope>
-</dependency>
-
-<!-- Optional Spring Boot support (only in Spring Boot environment) -->
-<dependency>
-    groupId>org.blockchain-innovation.factom.client</groupId>
-    <artifactId>spring-boot-support</artifactId>
-    <version>0.3.0</version>
-    <scope>compile</scope>
-</dependency>
 
 ....
 
@@ -69,12 +18,11 @@ You need at least the following dependencies in your application
 ```
 gradle codegen
 
-mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-client/java-okhttp/pom.xml deploy
-mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-models/java-gson/pom.xml deploy
-mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::http://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-server/java-spring-api/pom.xml deploy
+mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::https://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-client/java-okhttp/pom.xml deploy
+mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::https://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-models/java-gson/pom.xml deploy
+mvn -DaltDeploymentRepository=sphereon-opensource-snapshots::default::https://nexus.qa.sphereon.com/repository/sphereon-opensource-snapshots -f build/factom-did-server/java-spring-api/pom.xml deploy
 
 ```
 
 == Active Development
-IMPORTANT: This software still is in early development stage. As such you should expect breaking changes in APIs, we expect
-to keep that to a minimum though.
+IMPORTANT: This software still is in early development stage. As such you should expect breaking changes in APIs, we expect to keep that to a minimum though.
