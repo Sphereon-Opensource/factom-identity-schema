@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'org.factomprotocol.identity'
-version '0.3.0'
+version '0.3.1-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
@@ -21,7 +21,7 @@ ext {
             artifactClientDescription: "Factom DID client",
             artifactServerDescription: "Factom DID server",
             artifactUrl: "https://github.com/Sphereon-Opensource/factom-identity-schema/",
-            version: "0.3.0",
+            version: "0.3.1-SNAPSHOT",
             apiPackage: "org.factomprotocol.identity.did.api",
             invokerPackage: "org.factomprotocol.identity.did.invoker",
             modelPackage: "org.factomprotocol.identity.did.model",
