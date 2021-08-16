@@ -7,7 +7,7 @@ info:
     email: dev@sphereon.com
   license:
     name: Apache 2.0
-    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+    url: 'https://www.apache.org/licenses/LICENSE-2.0.html'
   version: 0.3.1
 servers:
   - url: http://localhost:8080
@@ -524,13 +524,12 @@ components:
       type: object
       required:
         - identity
+      readOnly: true
       properties:
         identity:
           $ref: '#/components/schemas/IdentityEntry'
-          readOnly: true
         metadata:
           $ref: '#/components/schemas/Metadata'
-          readOnly: true
     IdentityEntry:
       type: object
       required:
@@ -555,10 +554,8 @@ components:
       properties:
         creation:
           $ref: '#/components/schemas/BlockInfo'
-          readOnly: true
         update:
           $ref: '#/components/schemas/BlockInfo'
-          readOnly: true
     BlockInfo:
       type: object
       properties:
@@ -584,7 +581,6 @@ components:
             $ref: '#/components/schemas/ReplaceKeyEntry'
         metadata:
           $ref: '#/components/schemas/Metadata'
-          readOnly: true
     ReplaceKeyRequest:
       type: object
       required:
@@ -660,6 +656,18 @@ components:
           minLength: 43
         publicKeyBase58:
           type: string
+        publicKeyBase64:
+            type: string
+        publicKeyMultibase:
+          type: string
+        publicKeyHex:
+          type: string
+        publicKeyPem:
+          type: string
+        publicKeyJwk:
+          $ref: '#/components/schemas/JwkKey'
+        blockchainAccountId:
+          type: string
         priorityRequirement:
           type: integer
           minimum: 0
@@ -695,6 +703,77 @@ components:
         purpose:
           - "publicKey"
           - "authentication"
+    JwkKey:
+      type: object
+      additionalProperties: true
+      properties:
+        kty:
+          $ref: '#/components/schemas/JwkKeyTy'
+        crv:
+          type: string
+        x:
+          type: string
+        y:
+          type: string
+        d:
+          type: string
+        n:
+          type: string
+        e:
+          type: string
+        p:
+          type: string
+        q:
+          type: string
+        dp:
+          type: string
+        dq:
+          type: string
+        qi:
+          type: string
+        oth:
+          type: object
+          additionalProperties:
+            type: string
+        t:
+          type: string
+        k:
+          type: string
+        kid:
+          type: string
+        alg:
+          type: string
+        use:
+          $ref: '#/components/schemas/JwkKeyUse'
+        key_ops:
+          $ref: '#/components/schemas/JwkKeyOps'
+    JwkKeyTy:
+      type: string
+      enum:
+        - EC
+        - RSA
+        - oct
+    JwkKeyCrv:
+      type: string
+      enum:
+        - P-256
+        - P-384
+        - P-521
+    JwkKeyUse:
+      type: string
+      enum:
+        - sig
+        - enc
+    JwkKeyOps:
+      type: string
+      enum:
+        - sign
+        - verify
+        - encrypt
+        - decrypt
+        - unwrapKey
+        - deriveKey
+        - deriveBits
     Service:
       type: object
       additionalProperties: true
@@ -721,13 +800,21 @@ components:
       type: string
       enum:
         - Ed25519VerificationKey
-        - ECDSASecp256k1VerificationKey
-        - RSAVerificationKey
+        - Ed25519VerificationKey2020
+        - EcdsaSecp256k1VerificationKey2019
+        - RsaVerificationKey2018
+        - JsonWebKey2020
+        - Bls12381G1Key2020
+        - GpgVerificationKey2020
+        - X25519KeyAgreementKey2019
+        - SchnorrSecp256k1VerificationKey2019
+        - EcdsaSecp256k1RecoveryMethod2020
         - idpub
     KeyPurpose:
       type: string
       enum:
         - publicKey
+        - verificationMethod
         - authentication
         - assertionMethod
         - capabilityDelegation
