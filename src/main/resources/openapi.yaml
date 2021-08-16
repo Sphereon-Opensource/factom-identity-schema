@@ -676,8 +676,8 @@ components:
       example:
         id: "did:factom:e21f9aef1ed841a7d7d634c9dd0dc204c694b51ad7152a44c326113326283eeb#my-key"
         controller: "did:factom:e21f9aef1ed841a7d7d634c9dd0dc204c694b51ad7152a44c326113326283eeb"
-        publicKeyBase58: "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-        type: "Ed25519VerificationKey"
+        publicKeyMultibase: "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        type: "Ed25519VerificationKey2020"
         priorityRequirement: 0
     ManagementKey:
       allOf:
@@ -800,6 +800,7 @@ components:
       type: string
       enum:
         - Ed25519VerificationKey
+        - Ed25519VerificationKey2018
         - Ed25519VerificationKey2020
         - EcdsaSecp256k1VerificationKey2019
         - RsaVerificationKey2018
