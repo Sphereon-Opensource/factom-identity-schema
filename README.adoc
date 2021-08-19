@@ -13,7 +13,7 @@ You need at least the following dependencies in your application
 
 ....
 
-== Maven generation and deployment
+== Maven generation and nexus deployment
 
 ```
 gradle codegen
