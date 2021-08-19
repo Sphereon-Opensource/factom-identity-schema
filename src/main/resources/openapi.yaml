@@ -490,6 +490,7 @@ components:
   schemas:
     CreateIdentityRequest:
       type: object
+      description: Create a simple Factom native identity. These can be represented as simple/wrapped DIDs as well
       required:
         - tags
         - version
@@ -540,10 +541,12 @@ components:
           type: integer
           minimum: 1
           maximum: 1
+          description: The version to use for the identity chain. Currently only '1' is supported
         keys:
           type: array
           items:
             type: string
+          description: The idpub strings
       example:
         version: 1
         keys:
@@ -562,14 +565,18 @@ components:
         blockHeight:
           type: integer
           format: int64
+          description: The block height/number
         entryTimestamp:
           type: integer
           format: int64
+          description: The timestamp of the entry
         blockTimestamp:
           type: integer
           format: int64
+          description: The timestamp of the block of the entry
         entryHash:
           type: string
+          description: The unique hash for the entry
     IdentityEntries:
       type: object
       properties:
@@ -634,6 +641,7 @@ components:
 
     FactomKey:
       type: object
+      description: A Factom type key/identity
       properties:
         publicValue:
           type: string
@@ -641,38 +649,48 @@ components:
           $ref: '#/components/schemas/KeyType'
     Key:
       type: object
+      description: A key object. Please note that only one public key should be filled!
       required:
-        - id
         - type
       properties:
         id:
           type: string
           pattern: '^did:factom:$'
           minLength: 43
+          description: The ID of the key. During creation this is typically generated for you
         type:
           $ref: '#/components/schemas/KeyType'
         controller:
           type: string
           minLength: 43
+          description: The controller of the DID
         publicKeyBase58:
           type: string
+          description: The public key in base 58 (BTC) format.
         publicKeyBase64:
             type: string
+            description: The public key in base 64 format.
         publicKeyMultibase:
           type: string
+          description: The public key in multibase format.
         publicKeyHex:
           type: string
+          description: The public key in HEX format.
         publicKeyPem:
           type: string
+          description: The public key in PEM format.
         publicKeyJwk:
           $ref: '#/components/schemas/JwkKey'
         blockchainAccountId:
           type: string
+          description: Optional blockchain Account ID.
         priorityRequirement:
           type: integer
           minimum: 0
+          description: The required priority of the management key to update this key
         bip44:
           type: string
+          description: BIP44 derivation path
       example:
         id: "did:factom:e21f9aef1ed841a7d7d634c9dd0dc204c694b51ad7152a44c326113326283eeb#my-key"
         controller: "did:factom:e21f9aef1ed841a7d7d634c9dd0dc204c694b51ad7152a44c326113326283eeb"
@@ -680,6 +698,7 @@ components:
         type: "Ed25519VerificationKey2020"
         priorityRequirement: 0
     ManagementKey:
+      description: A Key that is used to manage updates of the Factom entries
       allOf:
         - $ref: '#/components/schemas/Key'
         - type: object
@@ -687,25 +706,28 @@ components:
             priority:
               type: integer
               minimum: 0
+              description: The priority of the key. A Key with priority 0 can manage key with priority 1 and up and so on
       example:
         id: "did:factom:e21f9aef1ed841a7d7d634c9dd0dc204c694b51ad7152a44c326113326283eeb#management-key"
         priority: 0
     DidKey:
+      description: A Key that ends up in the DID document
       allOf:
         - $ref: '#/components/schemas/Key'
         - type: object
           properties:
             purpose:
               type: array
+              description: The purposes of the key. This also translates to DID verification methods
               items:
                 $ref: '#/components/schemas/KeyPurpose'
       example:
         purpose:
-          - "publicKey"
+          - "verificationMethod"
           - "authentication"
     JwkKey:
       type: object
-      additionalProperties: true
+      description: JWK key for Aries style VC usage
       properties:
         kty:
           $ref: '#/components/schemas/JwkKeyTy'
@@ -776,28 +798,36 @@ components:
         - deriveBits
     Service:
       type: object
+      description: A Factom service that ends op in the DID document, without the priorityRequirement
       additionalProperties: true
       required:
-        - id
         - type
+        - priorityRequirement
+        - serviceEndpoint
       properties:
         id:
           type: string
+          description: The service Id
         type:
           type: string
+          description: A service type
         serviceEndpoint:
           type: string
+          description: The service endpoint/URI
         priorityRequirement:
           type: integer
           minimum: 0
+          title: Priority Requirement
+          description: The minimum priority needed by a management key to update this service
       example:
         id: "did:factom:e21f9aef1ed841a7d7d634c9dd0dc204c694b51ad7152a44c326113326283eeb#example-service"
         type: "CredentialRepositoryService"
         serviceEndpoint: "https://repository.example.com/service/8377464"
-        priorityRequirement: 0
+        priorityRequirement: 1
 
     KeyType:
       type: string
+      description: The Key type. idpub is Factom specific and will be converted to Edd25519VerificationKey2018
       enum:
         - Ed25519VerificationKey
         - Ed25519VerificationKey2018
@@ -813,6 +843,7 @@ components:
         - idpub
     KeyPurpose:
       type: string
+      description: The key purpose which will translate to the different DID verification methods. publicKey is deprecated
       enum:
         - publicKey
         - verificationMethod
@@ -823,11 +854,13 @@ components:
         - keyAgreement
     IdLookup:
       type: object
+      description: Lookup object for ids
       required:
         - id
       properties:
         id:
           type: string
+          description: The ID to lookup
       example:
         id: "did:factom:e21f9aef1ed841a7d7d634c9dd0dc204c694b51ad7152a44c326113326283eeb#example-key"
     IdPurposeLookup:
@@ -932,4 +965,3 @@ components:
       type: apiKey
       name: X-API-Key
       in: header
-
